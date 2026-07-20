@@ -50,9 +50,10 @@ def build_supervised_frame(
         derived[f"{target_column}_std_{window}"] = history.std()
 
     if timestamp_column in ordered:
-        elapsed = (ordered[timestamp_column] - ordered[timestamp_column].iloc[0]).dt.total_seconds()
-        derived["hour_sin"] = np.sin(2 * np.pi * elapsed / 3_600)
-        derived["hour_cos"] = np.cos(2 * np.pi * elapsed / 3_600)
+        timestamp = ordered[timestamp_column]
+        seconds_of_day = timestamp.dt.hour * 3_600 + timestamp.dt.minute * 60 + timestamp.dt.second
+        derived["time_of_day_sin"] = np.sin(2 * np.pi * seconds_of_day / 86_400)
+        derived["time_of_day_cos"] = np.cos(2 * np.pi * seconds_of_day / 86_400)
 
     features = pd.concat(
         [ordered[numeric_columns].astype(float), pd.DataFrame(derived, index=ordered.index)],

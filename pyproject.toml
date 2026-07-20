@@ -8,6 +8,7 @@ version = "1.0.0"
 description = "Time-series forecasting pipeline for methane sensor readings"
 requires-python = ">=3.11"
 authors = [{ name = "Alim Narmamatov" }]
+license = { file = "LICENSE" }
 dependencies = [
   "gdown>=5.2,<6.0",
   "joblib>=1.4,<2.0",

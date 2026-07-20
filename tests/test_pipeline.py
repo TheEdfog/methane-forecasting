@@ -36,6 +36,19 @@ def test_target_is_shifted_into_the_future():
     assert np.isclose(features.iloc[0]["MM263_lag_1"], frame.loc[first_original_index - 1, "MM263"])
 
 
+def test_time_features_represent_time_of_day() -> None:
+    frame = generate_sensor_data(rows=200, seed=7)
+    frame.loc[:, "timestamp"] = pd.date_range("2025-01-01 06:00:00", periods=200, freq="24h")
+    features, _ = build_supervised_frame(
+        frame,
+        horizon_steps=1,
+        lags=(1,),
+        rolling_windows=(2,),
+    )
+    assert features["time_of_day_sin"].nunique() == 1
+    assert features["time_of_day_cos"].nunique() == 1
+
+
 def test_split_is_chronological():
     frame = generate_sensor_data(rows=500, seed=2)
     features, target = build_supervised_frame(

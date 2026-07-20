@@ -9,7 +9,7 @@ I first built this as a university ML assignment. The old notebook depended on G
 The pipeline performs four steps:
 
 1. Sort and validate sensor readings.
-2. Build lag, rolling and time-of-day features.
+2. Build lag, past-only rolling and cyclical time-of-day features.
 3. Move the methane target forward by the requested horizon.
 4. Train a gradient boosting regressor and compare it with a persistence baseline.
 

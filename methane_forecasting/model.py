@@ -29,6 +29,8 @@ def evaluate_forecast(
     actual: pd.Series | np.ndarray,
     predicted: np.ndarray,
     persistence: pd.Series | np.ndarray,
+    *,
+    train_rows: int = 0,
 ) -> ForecastReport:
     actual_values = np.asarray(actual, dtype=float)
     predicted_values = np.asarray(predicted, dtype=float)
@@ -38,7 +40,7 @@ def evaluate_forecast(
         rmse=float(mean_squared_error(actual_values, predicted_values) ** 0.5),
         r2=float(r2_score(actual_values, predicted_values)),
         persistence_mae=float(mean_absolute_error(actual_values, persistence_values)),
-        train_rows=0,
+        train_rows=train_rows,
         test_rows=len(actual_values),
     )
 
@@ -69,14 +71,11 @@ def train_forecaster(
     )
     model.fit(x_train, y_train)
     predictions = model.predict(x_test)
-    base = evaluate_forecast(y_test, predictions, x_test[target_column])
-    report = ForecastReport(
-        mae=base.mae,
-        rmse=base.rmse,
-        r2=base.r2,
-        persistence_mae=base.persistence_mae,
+    report = evaluate_forecast(
+        y_test,
+        predictions,
+        x_test[target_column],
         train_rows=len(x_train),
-        test_rows=len(x_test),
     )
 
     if model_path is not None:

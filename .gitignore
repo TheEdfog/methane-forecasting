@@ -6,4 +6,4 @@ __pycache__/
 *.egg-info/
 artifacts/
 data/*.csv
-!data/sample_methane.csv
+data/*.part

@@ -2,7 +2,7 @@
 
 This project predicts methane concentration from a sequence of industrial sensor readings. The forecast horizon is configurable; the original experiment used a 15 minute horizon with one reading per second.
 
-I first built this as a university ML assignment. The old notebook depended on a private Google Drive file and used a random train-test split. That split was not appropriate for a time series because later observations could leak into training. This version uses a chronological split and keeps feature calculations limited to information available at prediction time.
+I first built this as a university ML assignment. The old notebook depended on Google Drive and used a random train-test split. That split was not appropriate for a time series because later observations could leak into training. This version uses a chronological split and keeps feature calculations limited to information available at prediction time.
 
 ## Approach
 
@@ -20,15 +20,20 @@ The persistence baseline predicts that the future methane value will equal the l
 ```bash
 python -m venv .venv
 python -m pip install -e ".[dev]"
-python -m methane_forecasting generate-sample
 python -m methane_forecasting train
 ```
 
 The training command writes the fitted model and a JSON report to `artifacts/`. Generated artifacts and private sensor data are ignored by Git.
 
-The repository includes a synthetic dataset generator so the full workflow can be run without access to the original industrial data. Synthetic data is only a reproducibility aid; it is not presented as measured mine data.
+By default the command reads `data/filtered_data_frame.csv`. If that file is absent, it downloads the [original public file from Google Drive](https://drive.google.com/file/d/1hz0dj5TVr0fFPI-mqQf7-s3JkiqQYmrx/view). Downloads are resumable and go through a `.part` file, so an interrupted transfer does not replace a valid dataset.
 
-On the bundled synthetic sample, the checked-in configuration produced MAE `0.043` and R2 `0.618`. The persistence baseline MAE was `0.108`. These numbers verify the pipeline, but they are not evidence of performance on a real mine.
+The dataset is large and is not stored in Git. To download it without starting training:
+
+```bash
+python -m methane_forecasting download-data
+```
+
+To use a file that was copied into the folder manually, keep the default name or pass its path with `--input`. Add `--no-download` if a missing local file should be treated as an error.
 
 ## Use another dataset
 
@@ -36,7 +41,8 @@ The input must contain a numeric `MM263` target column. A `timestamp` column is 
 
 ```bash
 python -m methane_forecasting train \
-  --input path/to/readings.csv \
+  --input data/another_sensor_export.csv \
+  --no-download \
   --horizon 900 \
   --model-output artifacts/model.joblib \
   --report-output artifacts/metrics.json
@@ -50,7 +56,7 @@ ruff format --check .
 pytest
 ```
 
-Tests cover future target construction, chronological splitting and a complete model fit on generated data.
+Tests cover dataset resolution without network access, future target construction, chronological splitting and a complete model fit on generated test data.
 
 ## Repository layout
 
@@ -58,7 +64,7 @@ Tests cover future target construction, chronological splitting and a complete m
 methane_forecasting/   reusable data, feature and model code
 notebooks/             short walkthrough by Alim Narmamatov
 tests/                 leakage and pipeline checks
-data/                  generated sample data
+data/                  local dataset folder; CSV files are ignored by Git
 ```
 
 ## Limits

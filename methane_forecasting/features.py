@@ -6,6 +6,14 @@ import numpy as np
 import pandas as pd
 
 
+def _sort_readings(frame: pd.DataFrame, timestamp_column: str) -> pd.DataFrame:
+    readings = frame.copy()
+    if timestamp_column not in readings:
+        return readings
+    readings[timestamp_column] = pd.to_datetime(readings[timestamp_column], errors="raise")
+    return readings.sort_values(timestamp_column).reset_index(drop=True)
+
+
 def build_supervised_frame(
     frame: pd.DataFrame,
     *,
@@ -21,34 +29,35 @@ def build_supervised_frame(
     if horizon_steps <= 0:
         raise ValueError("horizon_steps must be positive")
 
-    ordered = frame.copy()
-    if timestamp_column in ordered:
-        ordered[timestamp_column] = pd.to_datetime(ordered[timestamp_column], errors="raise")
-        ordered = ordered.sort_values(timestamp_column).reset_index(drop=True)
+    ordered = _sort_readings(frame, timestamp_column)
 
     numeric_columns = ordered.select_dtypes(include="number").columns.tolist()
     if target_column not in numeric_columns:
         raise ValueError(f"target column must be numeric: {target_column}")
 
-    features = ordered[numeric_columns].astype(float).copy()
+    derived: dict[str, pd.Series] = {}
     for lag in sorted(set(lags)):
         if lag <= 0:
             raise ValueError("lags must be positive")
         for column in numeric_columns:
-            features[f"{column}_lag_{lag}"] = ordered[column].shift(lag)
+            derived[f"{column}_lag_{lag}"] = ordered[column].shift(lag)
 
     for window in sorted(set(rolling_windows)):
         if window <= 1:
             raise ValueError("rolling windows must be greater than one")
         history = ordered[target_column].shift(1).rolling(window=window, min_periods=window)
-        features[f"{target_column}_mean_{window}"] = history.mean()
-        features[f"{target_column}_std_{window}"] = history.std()
+        derived[f"{target_column}_mean_{window}"] = history.mean()
+        derived[f"{target_column}_std_{window}"] = history.std()
 
     if timestamp_column in ordered:
         elapsed = (ordered[timestamp_column] - ordered[timestamp_column].iloc[0]).dt.total_seconds()
-        features["hour_sin"] = np.sin(2 * np.pi * elapsed / 3_600)
-        features["hour_cos"] = np.cos(2 * np.pi * elapsed / 3_600)
+        derived["hour_sin"] = np.sin(2 * np.pi * elapsed / 3_600)
+        derived["hour_cos"] = np.cos(2 * np.pi * elapsed / 3_600)
 
+    features = pd.concat(
+        [ordered[numeric_columns].astype(float), pd.DataFrame(derived, index=ordered.index)],
+        axis=1,
+    )
     target = ordered[target_column].shift(-horizon_steps).rename("target")
     valid = features.notna().all(axis=1) & target.notna()
     return features.loc[valid].reset_index(drop=True), target.loc[valid].reset_index(drop=True)

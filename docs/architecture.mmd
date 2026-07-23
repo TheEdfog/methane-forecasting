@@ -1,0 +1,4 @@
+flowchart LR
+    source["Данные датчиков<br/>проверка и сортировка"] --> features["Хронологическое разбиение<br/>и признаки без утечки"]
+    features --> models["Gradient Boosting<br/>и persistence baseline"]
+    models --> artifacts["Сравнение метрик<br/>модель и JSON-отчёт"]

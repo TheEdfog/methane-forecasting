@@ -20,10 +20,8 @@ flowchart TD
     source["CSV с показаниями датчиков"] --> validate["Проверка схемы<br/>и сортировка по времени"]
     validate --> split["Хронологическое<br/>train/test-разбиение"]
     split --> features["Лаговые, скользящие<br/>и временные признаки"]
-    features --> model["Gradient Boosting"]
-    features --> baseline["Persistence baseline"]
-    model --> compare["Сравнение метрик"]
-    baseline --> compare
+    features --> models["Gradient Boosting<br/>и persistence baseline"]
+    models --> compare["Сравнение метрик"]
     compare --> artifacts["Модель и JSON-отчёт"]
 ```
 

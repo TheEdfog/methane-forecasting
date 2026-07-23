@@ -15,6 +15,18 @@
 
 Baseline предполагает, что будущее значение метана останется равным последнему измерению. Для медленно меняющегося сигнала это важная точка сравнения: она не позволяет сложной модели выглядеть убедительно только за счёт гладкости временного ряда.
 
+```mermaid
+flowchart LR
+    source["CSV с показаниями датчиков"] --> validate["Проверка схемы<br/>и сортировка по времени"]
+    validate --> split["Хронологическое<br/>train/test-разбиение"]
+    split --> features["Лаговые, скользящие<br/>и временные признаки"]
+    features --> model["Gradient Boosting"]
+    features --> baseline["Persistence baseline"]
+    model --> compare["Сравнение метрик"]
+    baseline --> compare
+    compare --> artifacts["Модель и JSON-отчёт"]
+```
+
 ## Запуск
 
 ```bash
